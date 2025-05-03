@@ -27,7 +27,7 @@ from mcp_cli.provider_config import ProviderConfig  # Import ProviderConfig
 # Logging setup
 # ---------------------------------------------------------------------------
 logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(filename)s:%(lineno)d - %(levelname)s - %(message)s",
     stream=sys.stderr,
 )
 
