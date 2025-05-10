@@ -87,8 +87,13 @@ def process_options(
     
     # Use a default model if none is provided.
     if not model:
-        model = "gpt-4o-mini" if provider.lower() == "openai" else "qwen2.5-coder"
-    
+        if provider.lower() == "openai":
+            model = "gpt-4o-mini"
+        elif provider.lower() == "gemini":
+            model = "gemini-2.5-flash-preview-04-17"
+        else:
+            model = "qwen2.5-coder"
+    logging.info(f"Using model: {model}")
     # Set environment variables used by the MCP code.
     os.environ["LLM_PROVIDER"] = provider
     os.environ["LLM_MODEL"] = model

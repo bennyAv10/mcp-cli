@@ -22,6 +22,7 @@ class GeminiLLMClient(BaseLLMClient):
             raise ValueError("The GEMINI_API_KEY environment variable is not set.")
 
         self.client = genai.Client(api_key=self.api_key)
+        self.chat = self.client.chats.create(model=self.model)
 
     def create_completion(self, messages: List[Dict], tools: List = None) -> Dict[str, Any]:
         logging.info(f"Creating completion with model: {self.model} and tools: {json.dumps(tools)} and messages: {messages}")
@@ -32,11 +33,18 @@ class GeminiLLMClient(BaseLLMClient):
             #     messages=messages,
             #     tools=tools or [],
             # )
+            # response = self.client.models.generate_content(model=self.model, contents=messages)
 
-            main_response = response.choices[0].message.content
+            # The chat component self manages to chat history. Hence, we only need to send the last message.
+            config = types.GenerateContentConfig(system_instruction=messages[0]["content"])
+            response = self.chat.send_message(message=messages[-1]["content"], config=config)
 
+            # main_response = response.choices[0].message.content
+            main_response = response.candidates[0].content.parts[0].text
+            logging.info(f"Main response: {main_response}")
             # The raw tool calls from the OpenAI library:
-            raw_tool_calls = getattr(response.choices[0].message, "tool_calls", None)
+            # raw_tool_calls = getattr(response.choices[0].message, "tool_calls", None)
+            raw_tool_calls = None
             if not raw_tool_calls:
                 final_tool_calls = []
             else:
