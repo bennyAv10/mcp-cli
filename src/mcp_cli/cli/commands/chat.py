@@ -50,6 +50,7 @@ class ChatCommand(BaseCommand):
 
     # --------------------------------------------------------------------- execute
     async def execute(self, tool_manager: ToolManager, **params) -> Any:
+        logging.info('tools: %s\n - end of tools \n', tool_manager.get_all_tools())
         """Spin up the chat UI with sane defaults."""
         from mcp_cli.chat.chat_handler import handle_chat_mode
 

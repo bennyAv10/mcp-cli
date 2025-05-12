@@ -25,7 +25,7 @@ class GeminiLLMClient(BaseLLMClient):
         self.chat = self.client.chats.create(model=self.model)
 
     async def create_completion(self, messages: List[Dict], tools: List = None) -> Dict[str, Any]:
-        logging.info(f"Creating completion with model: {self.model} and tools: {json.dumps(tools)} and messages: {messages}")
+        # logging.info(f"Creating completion with model: {self.model} and tools: {json.dumps(tools)} and messages: {messages}")
         print(json.dumps(tools))
         try:
             # response = self.client.chat.completions.create(
@@ -36,50 +36,58 @@ class GeminiLLMClient(BaseLLMClient):
             # response = self.client.models.generate_content(model=self.model, contents=messages)
 
             # The chat component self manages to chat history. Hence, we only need to send the last message.
-            config = types.GenerateContentConfig(system_instruction=messages[0]["content"])
+            gemini_tools = []
+            for tool in tools:
+                if not tool.get("type")  == "function":
+                    logging.warning(f"Unsupported tool type: {tool.get('type')}")
+                    continue
+                gemini_function = tool.get("function") 
+                gemini_tools.append(types.Tool(function_declarations=[gemini_function]))
+            config = types.GenerateContentConfig(system_instruction=messages[0]["content"], tools=gemini_tools)
+            logging.info(f"Request Config: {config}")
             response = self.chat.send_message(message=messages[-1]["content"], config=config)
 
             # main_response = response.choices[0].message.content
-            main_response = response.candidates[0].content.parts[0].text
-            logging.info(f"Main response: {main_response}")
+            relevant_response = response.candidates[0].content.parts[0]
+            main_response = relevant_response.text
+            logging.info(f"relevant_response: {relevant_response}")
             # The raw tool calls from the OpenAI library:
             # raw_tool_calls = getattr(response.choices[0].message, "tool_calls", None)
-            raw_tool_calls = None
-            if not raw_tool_calls:
-                final_tool_calls = []
-            else:
-                final_tool_calls = []
-                for call in raw_tool_calls:
-                    # Ensure we have some ID
-                    call_id = call.id or f"call_{uuid.uuid4().hex[:8]}"
+            
+            final_tool_calls = []
+            if relevant_response.function_call:
+                function_call = relevant_response.function_call
+                call_id = function_call.id or f"call_{uuid.uuid4().hex[:8]}"
+                final_tool_calls = []              
                     
-                    # Parse arguments to JSON string
-                    # This is the key fix to preserve the "location" argument
-                    try:
-                        # If arguments is a string, try to parse it
-                        if isinstance(call.function.arguments, str):
-                            arguments = json.loads(call.function.arguments)
-                        # If it's already a dict, use it as-is
-                        elif isinstance(call.function.arguments, dict):
-                            arguments = call.function.arguments
-                        # If it's None or can't be parsed, use an empty dict
-                        else:
-                            arguments = {}
-                        
-                        # Convert back to JSON string to match test expectations
-                        arguments_str = json.dumps(arguments)
-                    except (json.JSONDecodeError, TypeError):
-                        # Fallback to empty JSON string if parsing fails
-                        arguments_str = "{}"
+                # Parse arguments to JSON string
+                # This is the key fix to preserve the "location" argument
+                try:
+                    # If arguments is a string, try to parse it
+                    if isinstance(function_call.args, str):
+                        arguments = json.loads(function_call.args)
+                    # If it's already a dict, use it as-is
+                    elif isinstance(function_call.args, dict):
+                        arguments = function_call.args
+                    # If it's None or can't be parsed, use an empty dict
+                    else:
+                        arguments = {}
                     
-                    # Build the final structure your tests expect
-                    final_tool_calls.append({
-                        "id": call_id,
-                        "function": {
-                            "name": call.function.name,
-                            "arguments": arguments_str,
-                        },
-                    })
+                    # Convert back to JSON string to match test expectations
+                    arguments_str = json.dumps(arguments)
+                except (json.JSONDecodeError, TypeError):
+                    # Fallback to empty JSON string if parsing fails
+                    arguments_str = "{}"
+                
+                # Build the final structure your tests expect
+                final_tool_calls.append({
+                    "id": call_id,
+                    "function": {
+                        "name": function_call.name,
+                        "arguments": arguments_str,
+                    },
+                })
+                logging.info(f"Final Tool Calls: {final_tool_calls}")
 
             return {
                 "response": main_response,

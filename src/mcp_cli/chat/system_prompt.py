@@ -8,7 +8,7 @@ def generate_system_prompt(tools):
     prompt_generator = SystemPromptGenerator()
     tools_json = {"tools": tools}
 
-    system_prompt = prompt_generator.generate_prompt(tools_json)
+    system_prompt = ""#prompt_generator.generate_prompt(tools_json)
     system_prompt += """
 
 **GENERAL GUIDELINES:**

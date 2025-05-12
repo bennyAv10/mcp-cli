@@ -103,7 +103,7 @@ async def handle_chat_mode(
             return False
 
         # ── welcome banner (only once) ────────────────────────────────
-        clear_screen()
+        #clear_screen()
         display_welcome_banner(ctx.to_dict())
 
         # ── UI + conversation helpers ────────────────────────────────
