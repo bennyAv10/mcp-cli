@@ -24,7 +24,7 @@ class GeminiLLMClient(BaseLLMClient):
         self.client = genai.Client(api_key=self.api_key)
         self.chat = self.client.chats.create(model=self.model)
 
-    def create_completion(self, messages: List[Dict], tools: List = None) -> Dict[str, Any]:
+    async def create_completion(self, messages: List[Dict], tools: List = None) -> Dict[str, Any]:
         logging.info(f"Creating completion with model: {self.model} and tools: {json.dumps(tools)} and messages: {messages}")
         print(json.dumps(tools))
         try:

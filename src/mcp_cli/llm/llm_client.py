@@ -84,6 +84,13 @@ def get_llm_client(
                 api_key=provider_settings["api_key"],
                 api_base=provider_settings["api_base"]
             )
+        elif provider.lower() == "gemini":
+            # import
+            from mcp_cli.llm.providers.gemini_client import GeminiLLMClient
+
+            # return the gemini client
+            return GeminiLLMClient(model=provider_settings["model"],
+                api_key=provider_settings["api_key"],)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     except Exception as e:

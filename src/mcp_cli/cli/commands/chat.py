@@ -20,9 +20,16 @@ log = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────────────────────
 def _default_model(provider: str, explicit: Optional[str]) -> str:
     """Return a guaranteed model string."""
+    logging.info('setting model')
     if explicit:          # user passed --model
         return explicit
-    return "gpt-4o-mini" if provider.lower() == "openai" else "qwen2.5-coder"
+    if provider.lower() == "openai":
+        model = "gpt-4o-mini"
+    elif provider.lower() == "gemini":
+        model = "gemini-2.5-flash-preview-04-17"
+    else:
+        model = "qwen2.5-coder"
+    return model
 
 
 def _set_logging(level: str) -> None:

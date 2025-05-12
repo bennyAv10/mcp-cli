@@ -49,7 +49,13 @@ class ProviderConfig:
                 "api_key": None,
                 "api_base": None,
                 "default_model": "claude-3-opus-20240229"
-            }
+            },
+            "gemini": {
+                "api_key_env": "GEMINI_API_KEY",
+                "api_key": None,
+                "api_base": None,
+                "default_model": "gemini-2.5-flash-preview-04-17"
+            },
         }
         return config
     
